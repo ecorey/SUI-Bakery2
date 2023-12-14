@@ -1,8 +1,12 @@
 module sandbox::bakery_testing {
 
-    use sui::transfer;
+    
     use std::string::{Self, String};
+    use sui::transfer;
+    use sui::coin;
+    use sui::sui::SUI;
     use sui::object::{Self, UID};
+    use sui::balance::{Self, Balance};
     use sui::tx_context::{Self, TxContext};
 
    
@@ -24,21 +28,44 @@ module sandbox::bakery_testing {
 
     struct Bakery has key, store {
         id: UID,
+        owner: address,
         flour_created: u64,
         salt_created: u64,
-        yeast_created: u64
+        yeast_created: u64,
+        sui_balance: Balance<SUI>
+
     }
+
+    // ADMIN
+    struct MasterBaker has key { id: UID }
+
+    // public entry fun collect_profits(_: &MasterBaker, bakery: &mut Bakery, ctx: &mut TxContext) {
+    //     let amount = balance::value(&bakery.sui_balance);
+    //     let profits = coin::take(&mut bakery.sui_balance, amount, ctx);
+
+    //     transfer::transfer(profits, tx_context::sender(ctx))
+    // }
+
+
+
 
     // INIT
     fun init(ctx: &mut TxContext) {
+        let bakery_owner = sui::tx_context::sender(ctx);
         transfer::share_object(
             Bakery {
                 id: object::new(ctx),
+                owner: bakery_owner,
                 flour_created: 0,
                 salt_created: 0,
-                yeast_created: 0
+                yeast_created: 0,
+                sui_balance: balance::zero(),
             }
-        )
+        ); 
+
+        transfer::transfer(MasterBaker {
+            id: object::new(ctx),
+        }, bakery_owner)
     }
 
     // HELPER FUNCTIONS
