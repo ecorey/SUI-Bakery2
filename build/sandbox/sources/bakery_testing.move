@@ -87,6 +87,12 @@ module sandbox::bakery_testing {
         bakery.yeast_created = bakery.yeast_created + 1;
     }
 
+    public entry fun transfer_yeast(yeast: Yeast, recipient: address) {
+        transfer::transfer(yeast, recipient);
+    }
+
+    // TESTS ----------------------------------------------------------
+
     #[test]
     fun test_flour() {
 
@@ -103,7 +109,7 @@ module sandbox::bakery_testing {
             init(test_scenario::ctx(scenario));
         };
 
-        // tx 2: `initial_owner` creates car
+        // tx 2: `initial_owner` creates flour
         test_scenario::next_tx(scenario, initial_owner);
         {
             let bakery = test_scenario::take_shared<Bakery>(scenario);
@@ -113,14 +119,14 @@ module sandbox::bakery_testing {
             test_scenario::return_shared<Bakery>(bakery);
         };
 
-        // tx 3: `initial_owner` transfers car to `final_owner`
+        // tx 3: `initial_owner` transfers flour to `final_owner`
         test_scenario::next_tx(scenario, initial_owner);
         {
             let flour = test_scenario::take_from_sender<Flour>(scenario);
             transfer_flour(flour, final_owner);
         };
 
-        // tx 4: check to see if `final_owner` has a `Car` by deleting it
+        // tx 4: check to see if `final_owner` has a `Flour` by deleting it
         test_scenario::next_tx(scenario, final_owner);
         {
             let flour = test_scenario::take_from_sender<Flour>(scenario);
@@ -147,7 +153,7 @@ module sandbox::bakery_testing {
         init(test_scenario::ctx(scenario));
     };
 
-    // tx 2: `initial_owner` creates car
+    // tx 2: `initial_owner` creates salt
     test_scenario::next_tx(scenario, initial_owner);
     {
         let bakery = test_scenario::take_shared<Bakery>(scenario);
@@ -157,14 +163,14 @@ module sandbox::bakery_testing {
         test_scenario::return_shared<Bakery>(bakery);
     };
 
-    // tx 3: `initial_owner` transfers car to `final_owner`
+    // tx 3: `initial_owner` transfers salt to `final_owner`
     test_scenario::next_tx(scenario, initial_owner);
     {
         let salt = test_scenario::take_from_sender<Salt>(scenario);
         transfer_salt(salt, final_owner);
     };
 
-    // tx 4: check to see if `final_owner` has a `Car` by deleting it
+    // tx 4: check to see if `final_owner` has a `Salt` by deleting it
     test_scenario::next_tx(scenario, final_owner);
     {
         let salt = test_scenario::take_from_sender<Salt>(scenario);
@@ -172,6 +178,53 @@ module sandbox::bakery_testing {
         object::delete(id);
     };
 
+    test_scenario::end(scenario_val);
+
+
+    }
+
+    #[test]
+fun test_yeast() {
+
+    use sui::test_scenario;
+
+    let admin = @0x123;
+    let initial_owner = @0x456;
+    let final_owner = @0x789;
+
+    // tx 1: init module
+    let scenario_val = test_scenario::begin(admin);
+    let scenario = &mut scenario_val;
+    {
+        init(test_scenario::ctx(scenario));
+    };
+
+    //tx 2: 'initial_owner' creates yeast
+    test_scenario::next_tx(scenario, initial_owner);
+    {
+        let bakery = test_scenario::take_shared<Bakery>(scenario);
+        assert!(bakery.yeast_created == 0, 0);
+        create_yeast(&mut bakery, b"Yeast Brand", test_scenario::ctx(scenario));
+        assert!(bakery.yeast_created == 1, 0);
+        test_scenario::return_shared<Bakery>(bakery);
+    };
+
+    // tx 3: `initial_owner` transfers salt to `final_owner`
+    test_scenario::next_tx(scenario, initial_owner);
+    {
+        let yeast = test_scenario::take_from_sender<Yeast>(scenario);
+        transfer_yeast(yeast, final_owner);
+    };
+
+
+    // tx 4: check to see if 'final_owner' has Yeast by deleteing it
+    test_scenario::next_tx(scenario, final_owner);
+    {
+        let yeast = test_scenario::take_from_sender<Yeast>(scenario);
+        let Yeast {id, name: _,} = yeast;
+        object::delete(id);
+    };
+    
     test_scenario::end(scenario_val);
 }
 }
